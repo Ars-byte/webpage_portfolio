@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ars | Low Thumbnail Designer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@900&family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-color: #050101;
+            --accent-red: #552020;
+            --text-white: #ffffff;
+            --transition-speed: 0.5s;
+            --slider-border: none; 
+            --slider-glow: 0 0 60px rgba(255, 255, 255, 0.7);
+        }
+
+        body.light-theme {
+            --bg-color: #ffffff;
+            --text-white: #050101;
+            --slider-glow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-white);
+            font-family: 'Inter', sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: background-color var(--transition-speed) ease;
+        }
+
+        /* --- BARRA DE PROGRESO --- */
+        #progress-container {
+            position: fixed;
+            bottom: 0; left: 0; width: 100%; height: 6px;
+            background: rgba(128, 128, 128, 0.1); z-index: 1000;
+        }
+        #progress-bar {
+            width: 0%; height: 100%;
+            background-color: var(--accent-red);
+            box-shadow: 0 0 15px var(--accent-red);
+        }
+
+        /* --- STARTUP OVERLAY --- */
+        #startup-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: #ffffff;
+            display: flex; justify-content: center; align-items: center;
+            z-index: 2000;
+            transition: opacity 1s ease, visibility 1s;
+        }
+        .startup-logo { color: #000; font-size: 3rem; font-weight: 900; letter-spacing: 12px; text-transform: uppercase; }
+        .fade-out { opacity: 0; visibility: hidden; }
+
+        /* --- NAVEGACIÓN --- */
+        nav { padding: 30px 60px; display: flex; justify-content: space-between; align-items: center; z-index: 100; }
+        .logo { font-weight: 900; font-size: 1.8rem; letter-spacing: -1px; }
+        .nav-actions { display: flex; gap: 15px; align-items: center; }
+
+        .nav-btn {
+            background: transparent; border: 1px solid rgba(128, 128, 128, 0.4);
+            color: var(--text-white); width: 45px; height: 45px; border-radius: 8px;
+            cursor: pointer; display: flex; justify-content: center; align-items: center; transition: 0.3s;
+            font-size: 1.1rem;
+        }
+        .nav-btn:hover { border-color: var(--accent-red); color: var(--accent-red); }
+
+        /* Animación para el botón de música cuando suena */
+        .music-playing {
+            animation: pulse-red 2s infinite;
+            color: var(--accent-red);
+            border-color: var(--accent-red);
+        }
+
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(173, 0, 0, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(173, 0, 0, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(173, 0, 0, 0); }
+        }
+
+        .discord-btn {
+            background: #5865F2; color: white; text-decoration: none;
+            width: 45px; height: 45px; border-radius: 8px;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 1.2rem; transition: 0.3s;
+        }
+
+        /* --- CONTENIDO PRINCIPAL --- */
+        main { 
+            flex: 1; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            position: relative;
+            padding-bottom: 140px;
+            isolation: isolate; 
+        }
+        
+        .hero-container {
+            position: relative; 
+            display: flex; 
+            justify-content: center;
+            align-items: center; 
+            width: 100%; 
+            height: 100%; 
+            max-width: 1400px;
+        }
+
+        .slider-wrapper { 
+            position: relative; 
+            z-index: 999; 
+            will-change: transform; 
+        }
+
+        .slider-container {
+            width: 700px; height: 394px;
+            background: #000; border-radius: 12px;
+            overflow: hidden; 
+            border: none; 
+            box-shadow: var(--slider-glow);
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease;
+        }
+
+        .slider-wrapper:hover .slider-container {
+            transform: translateY(-20px) scale(1.03);
+            box-shadow: 0 30px 100px rgb(255, 255, 255);
+        }
+
+        .slide {
+            position: absolute; width: 100%; height: 100%;
+            opacity: 0; transition: opacity 0.8s ease;
+            background-size: cover; background-position: center;
+        }
+        .slide.active { opacity: 1; }
+
+        .bg-text {
+            font-family: 'Montserrat', sans-serif; 
+            font-size: 11vw; 
+            font-weight: 900; 
+            color: var(--bg-color); 
+            filter: url(#merged-outline) drop-shadow(0 0 15px rgba(0,0,0,0.8));
+            -webkit-text-stroke: 0;
+            position: absolute; 
+            z-index: 1; 
+            line-height: 0.8; 
+            letter-spacing: -2px; 
+            pointer-events: none; 
+            text-transform: uppercase;
+            transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .text-my { top: 6%; left: 0%; }
+        .text-works { bottom: -3%; right: 0%; transform: translateY(25%); }
+
+        .slider-wrapper:hover ~ .text-my { transform: translateX(-50px) translateY(-10px) rotate(-2deg); opacity: 0.7; }
+        .slider-wrapper:hover ~ .text-works { transform: translateY(25%) translateX(50px) translateY(10px) rotate(2deg); opacity: 0.7; }
+
+        .credits { 
+            position: fixed; 
+            bottom: 25px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            font-size: 0.75rem; 
+            font-weight: 900; 
+            opacity: 0.8; 
+            z-index: 100; 
+            text-transform: uppercase; 
+            letter-spacing: 1px;
+        }
+        .credits span { color: var(--accent-red); margin: 0 5px; }
+
+        .arrow {
+            position: absolute; top: 50%; transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.6); color: rgb(255, 0, 0); border: none;
+            width: 60px; height: 60px; border-radius: 50%;
+            cursor: pointer; z-index: 1100; opacity: 0; transition: 0.3s;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 1.5rem;
+        }
+        .slider-wrapper:hover .arrow { opacity: 1; }
+        .arrow:hover { background: var(--accent-red); transform: scale(1.1); }
+        .arrow-left { left: -90px; }
+        .arrow-right { right: -90px; }
+    </style>
+</head>
+<body>
+
+    <svg width="0" height="0" style="position: absolute; pointer-events: none;">
+      <defs>
+        <filter id="merged-outline" x="-20%" y="-20%" width="140%" height="140%">
+          <feMorphology in="SourceAlpha" operator="dilate" radius="5" result="thick" />
+          <feFlood flood-color="#ad0000" result="redColor" />
+          <feComposite in="redColor" in2="thick" operator="in" result="redOutline" />
+          <feMerge>
+            <feMergeNode in="redOutline" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+    </svg>
+
+    <audio id="bg-music" loop>
+        <source src="lofi_songs_for_slow_days.mp3" type="audio/mpeg">
+    </audio>
+
+    <div id="progress-container"><div id="progress-bar"></div></div>
+    <div id="startup-overlay"><div class="startup-logo">Jeshx</div></div>
+
+    <nav>
+        <div class="logo">Jeshx</div>
+        <div class="nav-actions">
+            <button class="nav-btn" id="music-btn" title="Reproducir música">
+                <i class="fa-solid fa-volume-xmark" id="music-icon"></i>
+            </button>
+            
+            <button class="nav-btn" id="theme-btn"><i class="fa-solid fa-circle-half-stroke"></i></button>
+            
+            <a href="https://discord.com/users/1312973413685661736" target="_blank" class="discord-btn">
+                <i class="fa-brands fa-discord"></i>
+            </a>
+        </div>
+    </nav>
+
+    <main>
+        <div class="hero-container">
+            <div class="slider-wrapper">
+                <button class="arrow arrow-left" onclick="prevSlide()"><i class="fa-solid fa-chevron-left"></i></button>
+                <button class="arrow arrow-right" onclick="nextSlide()"><i class="fa-solid fa-chevron-right"></i></button>
+
+                <div class="slider-container" id="slider">
+                    <div class="slide active" style="background-image: url('miniatura5.png')"></div>
+                    <div class="slide" style="background-image: url('miniatura4.png')"></div>
+                    <div class="slide" style="background-image: url('miniatura3.png')"></div>
+                    <div class="slide" style="background-image: url('miniatura2.png')"></div>
+                    <div class="slide" style="background-image: url('miniatura1.png')"></div>
+                </div>
+            </div>
+
+            <h1 class="bg-text text-my">MY</h1>
+            <h1 class="bg-text text-works">WORKS</h1>
+        </div>
+    </main>
+
+    <div class="credits">Page by: Ars-byte (jeshx)</div>
+
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        const progressBar = document.getElementById('progress-bar');
+        const sliderWrapper = document.querySelector('.slider-wrapper');
+        
+        // Control de Música
+        const music = document.getElementById('bg-music');
+        const musicBtn = document.getElementById('music-btn');
+        const musicIcon = document.getElementById('music-icon');
+        let isPlaying = false;
+
+        musicBtn.addEventListener('click', () => {
+            if (isPlaying) {
+                music.pause();
+                musicIcon.className = 'fa-solid fa-volume-xmark';
+                musicBtn.classList.remove('music-playing');
+            } else {
+                music.play();
+                musicIcon.className = 'fa-solid fa-volume-high';
+                musicBtn.classList.add('music-playing');
+            }
+            isPlaying = !isPlaying;
+        });
+
+        // Lógica de Slider (Existente)
+        let currentSlide = 0;
+        const slideDuration = 4000; 
+        let startTime = Date.now();
+        let elapsedBeforePause = 0;
+        let isPaused = false;
+
+        function updateProgress() {
+            if (!isPaused) {
+                const currentTime = Date.now();
+                const totalElapsed = (currentTime - startTime) + elapsedBeforePause;
+                const percentage = Math.min((totalElapsed / slideDuration) * 100, 100);
+                progressBar.style.width = percentage + '%';
+                if (totalElapsed >= slideDuration) nextSlide();
+            }
+            requestAnimationFrame(updateProgress);
+        }
+
+        function goToSlide(index) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (index + slides.length) % slides.length;
+            slides[currentSlide].classList.add('active');
+            startTime = Date.now();
+            elapsedBeforePause = 0;
+            progressBar.style.width = '0%';
+        }
+
+        function nextSlide() { goToSlide(currentSlide + 1); }
+        function prevSlide() { goToSlide(currentSlide - 1); }
+
+        sliderWrapper.addEventListener('mouseenter', () => {
+            isPaused = true;
+            elapsedBeforePause += (Date.now() - startTime);
+        });
+
+        sliderWrapper.addEventListener('mouseleave', () => {
+            isPaused = false;
+            startTime = Date.now();
+        });
+
+        updateProgress();
+
+        window.addEventListener('load', () => {
+            setTimeout(() => document.getElementById('startup-overlay').classList.add('fade-out'), 1200);
+        });
+
+        document.getElementById('theme-btn').addEventListener('click', function() {
+            document.body.classList.toggle('light-theme');
+        });
+    </script>
+</body>
+</html>
